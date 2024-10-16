@@ -189,7 +189,14 @@ const getLyrics = async (query: string) => {
 const getLyricsFull = async (query: string) => {
   const response = await getResponseQuery(query);
   // @ts-expect-error: It's a lie.
-  return response["track.lyrics.get"].message.body.lyrics as LyricsBody;
+  const matcherTrack = response["matcher.track.get"].message.body.track as any;
+  // @ts-expect-error: It's a lie.
+  const lyrics = response["track.lyrics.get"].message.body.lyrics as LyricsBody;
+
+  return {
+    track: matcherTrack,
+    body: lyrics,
+  };
 };
 
 const getLyricsISRC = async (isrc: string) => {
@@ -201,7 +208,14 @@ const getLyricsISRC = async (isrc: string) => {
 const getLyricsFullISRC = async (isrc: string) => {
   const response = await getResponseISRC(isrc);
   // @ts-expect-error: It's a lie.
-  return response["track.lyrics.get"].message.body.lyrics as LyricsBody;
+  const matcherTrack = response["matcher.track.get"].message.body.track as any;
+  // @ts-expect-error: It's a lie.
+  const lyrics = response["track.lyrics.get"].message.body.lyrics as LyricsBody;
+
+  return {
+    track: matcherTrack,
+    body: lyrics,
+  };
 };
 
 const getSubtitles = async (query: string) => {
