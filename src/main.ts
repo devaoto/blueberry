@@ -8,6 +8,7 @@ import {
 import { getLyrics as getLyricsFind } from "./providers/lyric-find.ts";
 import { cors } from "npm:hono/cors";
 import { prettyJSON } from "npm:hono/pretty-json";
+import { InternalServerError, RequestError } from "./errors/main.ts";
 
 const app = new Hono();
 
@@ -36,7 +37,25 @@ app.get("/lyrics/:query", async (c) => {
 
   if (provider === "musixmatch") {
     if (full) {
-      return c.json(await getLyricsFull(query));
+      try {
+        return c.json(await getLyricsFull(query));
+      } catch (error) {
+        if (error instanceof RequestError) {
+          return c.json(
+            { message: error.message },
+            // @ts-expect-error: Lie bitch lie
+            error.statusCode
+          );
+        } else if (error instanceof InternalServerError) {
+          return c.json(
+            { message: error.message },
+            // @ts-expect-error: Lie bitch lie
+            error.statusCode
+          );
+        } else {
+          return c.json({ message: (error as Error).message }, 500);
+        }
+      }
     } else {
       return c.json({
         lyrics: await getLyrics(query),

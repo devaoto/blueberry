@@ -3,6 +3,7 @@
   "specifiers": {
     "jsr:@std/assert@1": "1.0.6",
     "jsr:@std/internal@^1.0.4": "1.0.4",
+    "npm:@hono/node-server@*": "1.13.3_hono@4.6.4",
     "npm:@types/node@*": "22.5.4",
     "npm:axios@*": "1.7.7",
     "npm:axios@^1.7.7": "1.7.7",
@@ -23,6 +24,12 @@
     }
   },
   "npm": {
+    "@hono/node-server@1.13.3_hono@4.6.4": {
+      "integrity": "sha512-tEo3hcyQ6chvSnJ3tKzfX4z2sd7Q+ZkBwwBdW1Ya8Mz29dukxC2xcWiB/lAMwGJrYMW8QTgknIsLu1AsnMBe7A==",
+      "dependencies": [
+        "hono"
+      ]
+    },
     "@types/node@22.5.4": {
       "integrity": "sha512-FDuKUJQm/ju9fT/SeX/6+gBzoPzlVCzfzmGkwKvRHQVxi4BntVbyIwf6a4Xn62mrvndLiml6z/UBXIdEVjQLXg==",
       "dependencies": [

@@ -1,6 +1,7 @@
 import axios from "npm:axios";
 import { getTrack } from "../spotify.ts";
 import { getTrackISRC } from "../spotify.ts";
+import { InternalServerError, RequestError } from "../errors/main.ts";
 
 interface Header {
   status_code: number;
@@ -72,6 +73,16 @@ interface MacroCalls {
       };
     };
   };
+  "matcher.track.get": {
+    message: {
+      header: LyricsHeader;
+      body: {
+        track: {
+          [key: string]: unknown;
+        };
+      };
+    };
+  };
   "track.snippet.get": {
     message: {
       header: LyricsHeader;
@@ -139,11 +150,21 @@ const getResponseQuery = async (query: string) => {
 
     return body;
   } catch (error) {
-    console.error("Axios request error:", error);
-    return {
-      error: "An error occurred while fetching lyrics.",
-      uri: info.uri,
-    };
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 500) {
+        throw new InternalServerError(
+          error.message ? error.message : "An error occurred with the request.",
+          error.response.status
+        );
+      } else {
+        throw new RequestError(
+          error.message ? error.message : "An error occurred with the request.",
+          error.response?.status || 400
+        );
+      }
+    } else {
+      throw new InternalServerError();
+    }
   }
 };
 
@@ -172,25 +193,32 @@ const getResponseISRC = async (isrc: string) => {
 
     return body;
   } catch (error) {
-    console.error("Axios request error:", error);
-    return {
-      error: "An error occurred while fetching lyrics.",
-      uri: info.uri,
-    };
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 500) {
+        throw new InternalServerError(
+          "An internal server error occurred.",
+          error.response.status
+        );
+      } else {
+        throw new RequestError(
+          "An error occurred with the request.",
+          error.response?.status || 400
+        );
+      }
+    } else {
+      throw new RequestError("An unknown error occurred.");
+    }
   }
 };
 
 const getLyrics = async (query: string) => {
   const response = await getResponseQuery(query);
-  // @ts-expect-error: It's a lie.
   return response["track.lyrics.get"].message.body.lyrics.lyrics_body as string;
 };
 
 const getLyricsFull = async (query: string) => {
   const response = await getResponseQuery(query);
-  // @ts-expect-error: It's a lie.
-  const matcherTrack = response["matcher.track.get"].message.body.track as any;
-  // @ts-expect-error: It's a lie.
+  const matcherTrack = response["matcher.track.get"].message.body.track;
   const lyrics = response["track.lyrics.get"].message.body.lyrics as LyricsBody;
 
   return {
@@ -201,16 +229,13 @@ const getLyricsFull = async (query: string) => {
 
 const getLyricsISRC = async (isrc: string) => {
   const response = await getResponseISRC(isrc);
-  // @ts-expect-error: It's a lie.
   return response["track.lyrics.get"].message.body.lyrics.lyrics_body as string;
 };
 
 const getLyricsFullISRC = async (isrc: string) => {
   const response = await getResponseISRC(isrc);
-  // @ts-expect-error: It's a lie.
-  const matcherTrack = response["matcher.track.get"].message.body.track as any;
-  // @ts-expect-error: It's a lie.
-  const lyrics = response["track.lyrics.get"].message.body.lyrics as LyricsBody;
+  const matcherTrack = response["matcher.track.get"].message.body.track;
+  const lyrics = response["track.lyrics.get"].message.body.lyrics;
 
   return {
     track: matcherTrack,
@@ -221,7 +246,6 @@ const getLyricsFullISRC = async (isrc: string) => {
 const getSubtitles = async (query: string) => {
   const response = await getResponseQuery(query);
   return JSON.parse(
-    // @ts-expect-error: It's a lie.
     response["track.subtitles.get"].message.body.subtitle_list[0].subtitle
       .subtitle_body
   ) as Sync[];
@@ -232,15 +256,12 @@ const getSubtitlesFull = async (query: string) => {
 
   // Parse the subtitle body as JSON
   const parsedSubtitleBody = JSON.parse(
-    // @ts-expect-error: It's a lie.
-    (response["track.subtitles.get"].message.body as SubtitlesBody)
-      .subtitle_list[0].subtitle.subtitle_body
+    response["track.subtitles.get"].message.body.subtitle_list[0].subtitle
+      .subtitle_body
   ) as Sync[];
 
   const restWithoutBody = {
-    // @ts-expect-error: Stupid bitch.
-    ...(response["track.subtitles.get"].message.body as SubtitlesBody)
-      .subtitle_list[0].subtitle,
+    ...response["track.subtitles.get"].message.body.subtitle_list[0].subtitle,
   };
 
   return {
@@ -252,7 +273,6 @@ const getSubtitlesFull = async (query: string) => {
 const getSubtitlesISRC = async (isrc: string) => {
   const response = await getResponseISRC(isrc);
   return JSON.parse(
-    // @ts-expect-error: It's a lie.
     response["track.subtitles.get"].message.body.subtitle_list[0].subtitle
       .subtitle_body
   ) as Sync[];
@@ -263,15 +283,12 @@ const getSubtitlesFullISRC = async (isrc: string) => {
 
   // Parse the subtitle body as JSON
   const parsedSubtitleBody = JSON.parse(
-    // @ts-expect-error: It's a lie.
-    (response["track.subtitles.get"].message.body as SubtitlesBody)
-      .subtitle_list[0].subtitle.subtitle_body
+    response["track.subtitles.get"].message.body.subtitle_list[0].subtitle
+      .subtitle_body
   ) as Sync[];
 
   const restWithoutBody = {
-    // @ts-expect-error: Stupid bitch.
-    ...(response["track.subtitles.get"].message.body as SubtitlesBody)
-      .subtitle_list[0].subtitle,
+    ...response["track.subtitles.get"].message.body.subtitle_list[0].subtitle,
   };
 
   return {

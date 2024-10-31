@@ -1,5 +1,6 @@
 import axios from "npm:axios";
 import { load } from "npm:cheerio";
+import { RequestError } from "../errors/main.ts";
 
 interface Response {
   code: number;
@@ -147,7 +148,7 @@ export const getLyrics = async (query: string) => {
   const script = $("#__NEXT_DATA__").text();
 
   if (!script) {
-    throw new Error("Lyrics not found");
+    throw new RequestError("Lyrics not found", 404);
   }
 
   const parsedData = JSON.parse(script);
